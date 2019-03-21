@@ -1,0 +1,355 @@
+﻿@using Acmilan.Models
+@model IEnumerable<Company>
+
+<div id="app">
+    <el-container style="border: 1px solid #eee;">
+                <el-aside width="300px" style="padding:0px;height:100%">
+                    <el-header style="padding:0px; text-align: left; border: 1px solid #eee; font-size: 12px" >
+                        <template width="300">
+                            <el-select v-model="value" placeholder="Filter" v-on:change="getCompany(value)" style="width:290px">
+                                <el-option style="width:290px" v-for="item in list" :key="item.category_id" v-model="item.category_id" :label="item.categoryName" :disabled="item.disabled">
+                                </el-option>
+                            </el-select>
+                        </template>
+                    </el-header>
+                    <el-main style="padding:0px">
+                        <template>
+                            <el-table :data="tableData" height=841 v-on:row-click="onRowClick" :row-class-name="tableRowClassName" highlight-current-row>
+                                <el-table-column prop="companyName" label="CompanyName">
+                                </el-table-column>
+                            </el-table>
+                        </template>
+                    </el-main>
+                </el-aside>
+
+                <el-container>
+                    @*<p>{{webSite}}</p>*@
+                    <el-header style="text-align: right; font-size: 12px;overflow:hidden;">
+                        @*<div style="float:left"><i class="el-icon-tickets" v-on:click="copyUrl" style="margin-right: 20px"></i></div>*@
+                        @*<el-input id="webSite" style="width: auto;float:left" :value="webSite" readonly></el-input>*@
+                        @*<span style="float:left" id="webSite" v-on:click="copyUrl" href="javascript:void(0)">{{webSite}}</span>*@
+                        @*<a style="float:left" v-on:click="copyUrl" href="javascript:void(0)">{{webSite}}</a>*@
+                        <div style="float:left"><el-button type="primary" v-on:click="copyUrl">{{webSite}}</el-button></div>
+                        @*<script>
+                            function copyUrl() {
+                                var Url = document.getElementById("webSite");
+                                Url.select(); // 选择对象
+                                document.execCommand("Copy"); // 执行浏览器复制命令
+                                window.open(this.webSite);
+                            }
+                        </script>*@
+                            <el-dropdown>
+                                <i class="el-icon-setting" style="margin-right: 15px"></i>
+                                <el-dropdown-menu slot="dropdown">
+                                    <el-dropdown-item v-on:click.native="showWebsite">Website</el-dropdown-item>
+                                    <el-dropdown-item v-on:click.native="sourceCode">Source Code</el-dropdown-item>
+                                </el-dropdown-menu>
+                            </el-dropdown>
+                            <span>Operations</span>
+                    </el-header>
+
+                    <el-main style="padding:0px;margin:0;width:100%;overflow:hidden;">
+                        <el-input :style="{ display: showB }" type="textarea" readonly="readonly" :rows="39" placeholder="sourceCode" v-model="code"></el-input>
+                        <iframe :style="{height: '820px', padding:'0px' ,width: '100%', display: showA}" :src="siteView"></iframe>
+                        @*<iframe :style="{height: '820px', padding:'0px' ,width: '100%', display: showA}" :src="webSite"></iframe>*@
+                        @*@Html.Raw("<b>Hello World!</b>")*@
+                        @*@await Component.InvokeAsync("ViewHtml")*@
+                    </el-main>
+                </el-container>
+
+                <el-aside width="300px" style="padding:0px">
+                    <template style="padding:0px">
+                        <el-table :data="listA" style="width: 300px;padding:0px;" height="842" v-on:current-change="handleCurrentChange" highlight-current-row>
+                            <el-table-column type="expand" style="width: 280px;padding:0px">
+                                <template slot-scope="scope">
+                                    <el-table :data="scope.row.listB" style="width: 280px;padding:0px" v-on:current-change="handleCurrentChange" highlight-current-row>
+                                        <el-table-column prop="serviceName" label="Services" width="140">
+                                        </el-table-column>
+                                        <el-table-column fixed="right" label="Handle" width="60">
+                                            <template slot="header">
+                                                <el-button type="text" size="small" v-on:click="serviceAdd(scope.row.listB)">Add</el-button>
+                                            </template>
+                                            <template slot-scope="scope1">
+                                                <el-button v-on:click="serviceEdit(scope1.$index, scope.row.listB)" type="text" size="mini">E</el-button>
+                                                <el-button v-on:click="serviceDelete(scope1.$index, scope.row.listB)" type="text" size="mini">D</el-button>
+                                            </template>
+                                        </el-table-column>
+                                    </el-table>
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="Category" prop="category" width="150">
+                            </el-table-column>
+                            <el-table-column>
+                                <template slot="header" slot-scope="scope">
+                                    <el-button size="mini" v-on:click="dialogFormVisible = true">Add</el-button>
+                                </template>
+                                <template slot-scope="scope">
+                                    <el-button size="mini" type="danger" v-on:click="categoryDelete(scope.$index, listA)">Delete</el-button>
+                                </template>
+                        </el-table>
+                        <div>
+                            <el-button :style="{ display: submitBtn }" type="primary" v-on:click="submit">Submit</el-button>
+                            <el-button :style="{ display: editBtn }" type="success" v-on:click="edit">Edit</el-button>
+                        </div>
+                    </template>
+                    <el-dialog title="Add" :visible.sync="dialogFormVisible" center width="21%">
+                        <el-select v-model="categoryName" placeholder="select" style="width: 355px">
+                            <el-option v-for="single in array" :key="single.category_id" :value="single.categoryName" v-on:click.native="cd(single.category_id)" v-model="single.categoryName" :label="single.categoryName" :disabled="single.disabled"></el-option>
+                        </el-select>
+                        <div slot="footer" class="dialog-footer">
+                            <el-button v-on:click="dialogFormVisible = false">Cancel</el-button>
+                            <el-button type="primary" v-on:click="categoryAdd">Confirm</el-button>
+                        </div>
+                    </el-dialog>
+                </el-aside>
+
+    </el-container>
+</div>
+
+<script>
+            var Main = {
+                data() {
+                    return {
+                        isDisplay: 0,
+                        code: 'Loading ...',
+                        showA: 'block',
+                        showB: 'none',
+                        submitBtn: 'block',
+                        editBtn: 'none',
+                        categoryName: '',
+                        webSite: 'https://www.baidu.com',
+                        siteView: 'https://www.baidu.com',
+                        companyId: 0,
+                        categoryId: 0,
+                        tableData: [],
+                        value: '',
+                        currentRow: null,
+                        list: [],
+                        array: [],
+                        listA: [],
+                        dialogFormVisible: false,
+                        formLabelWidth: '120px'
+                    }
+                },
+                methods: {
+                    copyUrl() {
+                        window.open(this.webSite);
+                    },
+                    open() {
+                        this.$alert('The company has no website', 'Message', {
+                            confirmButtonText: 'confirm',
+                            center: true
+                        });
+                    },
+                    submit() {
+                        this.$confirm('Whether to submit ?', 'Message', {
+                            confirmButtonText: 'confirm',
+                            cancelButtonText: 'cancel',
+                            type: 'warning',
+                            center: true
+                        }).then(() => {
+                            this.$message({
+                                type: 'success',
+                                message: 'Submit successfully'
+                            });
+                            const url = `http://localhost:5000/Home/AddServiceList`;
+                            axios.post(url, {
+                                company_id: this.companyId,
+                                lists: this.listA
+                            }).then(function (response) {
+                                console.log(response);
+                            }).catch(function (error) {
+                                console.log(error);
+                            });
+                        }).catch(() => {
+                            this.$message({
+                                type: 'info',
+                                message: 'Cancel submit'
+                            });
+                        });
+                    },
+                    edit() {
+                        this.$confirm('Whether to submit ?', 'Message', {
+                            confirmButtonText: 'confirm',
+                            cancelButtonText: 'cancel',
+                            type: 'warning',
+                            center: true
+                        }).then(() => {
+                            this.$message({
+                                type: 'success',
+                                message: 'Submit successfully'
+                            });
+                            const url = `http://localhost:5000/Home/EditServiceList`;
+                            axios.post(url, {
+                                company_id: this.companyId,
+                                lists: this.listA
+                            }).then(function (response) {
+                                console.log(response);
+                            }).catch(function (error) {
+                                console.log(error);
+                            });
+                        }).catch(() => {
+                            this.$message({
+                                type: 'info',
+                                message: 'Cancel submit'
+                            });
+                        });
+                    },
+                    showWebsite() {
+                        this.showB = 'none';
+                        this.showA = 'block';
+                    },
+                    sourceCode() {
+                        this.showA = 'none';
+                        this.showB = 'block';
+                        var str = '';
+                        str = this.webSite;
+                        if (str != null && str != '') {
+                            this.code = 'Loading ...';
+                            const url = `http://localhost:5000/Home/Capture?str=${str}`;
+                            axios.get(url).then(
+                                Response => {
+                                    const result = Response.data.toString()
+                                    this.code = result
+                                    //alert(result)
+                                }).catch(error => {
+                                    alert('请求失败')
+                                });
+                        } else {
+                            this.code = 'The company has no website'
+                        }
+                    },
+                    tableRowClassName({ row, rowIndex }) {
+                        //把每一行的索引放进row
+                        row.index = rowIndex;
+                    },
+                    onRowClick(row) {
+                        this.showB = 'none';
+                        this.showA = 'block';
+                        //行点击消除new标记
+                        var index = row.index;
+                        var str = this.tableData[index].website;
+                        if (str == null) {
+                            //alert('The company has no website');
+                            this.open();
+                            this.webSite = '';
+                        };
+                        this.webSite = (str.indexOf("www") > -1 ? "http://" + str : "http://www." + str);
+                        var site = this.webSite;
+                        this.siteView = `http://localhost:5000/Home/SiteView?value=${site}`;
+                        this.companyId = this.tableData[index].company_id;
+                        this.getServiceList(this.companyId);
+                    },
+                    showBtn() {
+                        if (this.isDisplay === 0) {
+                            this.submitBtn = 'block',
+                            this.editBtn = 'none'
+                        } else {
+                            this.submitBtn = 'none',
+                                this.editBtn = 'block'
+                        };
+                    },
+                    setCurrent(row) {
+                        this.$refs.singleTable.setCurrentRow(row);
+                    },
+                    handleCurrentChange(val) {
+                        this.currentRow = val;
+                    },
+                    initA() {
+                        const url = `http://localhost:5000/Home/Select`
+                        axios.get(url).then(
+                            Response => {
+                                const result = Response.data
+                                this.list = result
+                            }).catch(error => {
+                                alert('请求失败')
+                            })
+                    },
+                    initB() {
+                        const url = `http://localhost:5000/Home/Select`
+                        axios.get(url).then(
+                            Response => {
+                                const res = Response.data
+                                this.array = res
+                            }).catch(error => {
+                                alert('请求失败')
+                            })
+                    },
+                    getCompany(category_id) {
+                        const url = `http://localhost:5000/Home/GetCompany?value=${category_id}`
+                        axios.get(url).then(
+                            Response => {
+                                const result = Response.data
+                                this.tableData = result
+                            }).catch(error => {
+                                alert('请求失败')
+                            })
+                    },
+                    cd(value) {
+                        this.categoryId = value;
+                    },
+                    categoryAdd() {
+                        this.dialogFormVisible = false;
+                        this.listA.push({ category_id: this.categoryId, category: this.categoryName, listB: [] });
+                        this.categoryName = '';
+                        this.categoryId = 0;
+                    },
+                    categoryDelete(index, rows) {
+                        rows.splice(index, 1);
+                    },
+                    getServiceList(companyId) {
+                        const url = `http://localhost:5000/Home/GetServiceList?company_id=${companyId}`
+                        axios.get(url).then(
+                            Response => {
+                                const result = Response.data
+                                this.listA = result.lists
+                                this.isDisplay = result.lists.length
+                                this.showBtn()
+                            }).catch(error => {
+                                alert('请求失败')
+                            })
+                    },
+                    serviceAdd(list) {
+                        this.$prompt('Please input', 'Add', {
+                            confirmButtonText: 'confirm',
+                            cancelButtonText: 'cancel',
+                            inputPattern: /\S/,
+                            inputErrorMessage: 'Can\'t be empty',
+                            center: true
+                        }).then(({ value }) => {
+                            this.$message({
+                                type: 'success',
+                                message: 'You Added is :  ' + value
+                            });
+                            list.push({ serviceName: value });
+                        });
+                    },
+                    serviceEdit(index, list) {
+                        this.$prompt('Please input', 'Edit', {
+                            confirmButtonText: 'confirm',
+                            cancelButtonText: 'cancel',
+                            inputPattern: /\S/,
+                            inputErrorMessage: 'Can\'t be empty',
+                            inputValue: list[index].serviceName,
+                            center: true
+                        }).then(({ value }) => {
+                            this.$message({
+                                type: 'success',
+                                message: 'You Edited is :  ' + value
+                            });
+                            list.splice(index, 1, { serviceName: value });
+                        });
+                    },
+                    serviceDelete(index, rows) {
+                        rows.splice(index, 1);
+                    }
+                },
+                mounted() {
+                    this.initA();
+                    this.initB();
+                    this.getCompany();
+                }
+            }
+            var Ctor = Vue.extend(Main)
+            new Ctor().$mount('#app')
+        </script>
