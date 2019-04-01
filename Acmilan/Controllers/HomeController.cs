@@ -44,8 +44,8 @@ namespace Acmilan.Controllers
             }
             catch (Exception ex)
             {
-                code = ex.ToString();
-                //code = "Failure to parse the website";
+                //code = ex.ToString();
+                code = "Failure to parse the website";
             }
             //await _companyService.AddSiteView(code);
             //string webSite = string.Empty;
@@ -53,7 +53,7 @@ namespace Acmilan.Controllers
             return code;
         }
 
-        public void AnalysisHtml(HtmlDocument doc,string tag,string attr,string value,string insertHtml)
+        public void AnalysisHtml(HtmlDocument doc, string tag, string attr, string value, string insertHtml)
         {
             var nodes = doc.DocumentNode.SelectNodes(tag);
             if (nodes != null)
@@ -102,6 +102,7 @@ namespace Acmilan.Controllers
                 AnalysisHtml(doc, "*//link", "href", value,insertHtml);
                 AnalysisHtml(doc, "*//script", "src", value,insertHtml);
                 AnalysisHtml(doc, "*//img", "src", value,insertHtml);
+                AnalysisHtml(doc, "*//a", "href", value,insertHtml);
                 docHtml = doc.DocumentNode.OuterHtml;
             }
             catch (Exception ex)
